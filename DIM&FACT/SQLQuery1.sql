@@ -2,7 +2,7 @@
 USE VNELOG
 GO
 
-create table DimUser 
+create table DimUser
 (
 	UserID int identity not null primary key nonclustered,
 	UserIP nvarchar(50) not null
@@ -54,7 +54,7 @@ GO
 --Try to insert data
 declare @date datetime
 set @date = '2014-01-30 15:19:47.000'
-insert into DimDate values 
+insert into DimDate values
 (
 	CAST(convert(varchar(8), @date, 112) AS INT), -- date key
 	@date, --date in string
@@ -68,3 +68,32 @@ insert into DimDate values
 )
 
 select * from DimDate
+
+select * from HistoricalAccessSample
+
+--create view
+create view [DIM User] as
+	select ROW_NUMBER() OVER (ORDER BY id) AS UserID,
+	IP_ADDRESS from HistoricalAccessSample
+
+select * from [DIM User]
+
+create view [DIM Device] as
+	select ROW_NUMBER() OVER (ORDER BY id, BROWSER) AS DeviceID,
+	SCREEN_RESOLUTION, BROWSER, OS, DEVICE_TYPE from HistoricalAccessSample
+
+select * from [DIM Device]
+
+create view [DIM Date] as
+	select CAST(convert(varchar(8), ACCESS_TIME, 112) AS INT) AS DateKey, -- date key
+		ACCESS_TIME AS DateAltKey, --date in string
+		YEAR(ACCESS_TIME) AS CalendarYear, --calendar year
+		DATEPART(QQ, ACCESS_TIME) AS CalendarQuarter, --calendar quarter
+		Month(ACCESS_TIME) AS MonthOfYear, --month of year
+		DATENAME(MM, ACCESS_TIME) AS [MonthName], --month name
+		DAY(ACCESS_TIME) AS [DayOfMonth],
+		DATEPART(DW, ACCESS_TIME) AS [DayOfWeek], --day of week
+		DATEName(DW, ACCESS_TIME) AS [DayName] --day name of week
+	from HistoricalAccessSample
+
+select * from [DIM Date]
